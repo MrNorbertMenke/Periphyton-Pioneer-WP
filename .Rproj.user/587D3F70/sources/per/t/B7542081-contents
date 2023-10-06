@@ -1,0 +1,173 @@
+
+########################################################################################################
+########################################################################################################
+
+#WP Environmental Risk Assessments
+# 3 Data summary and visualisation - Periphyton model summary stats and figs
+#2023-02-14  by Ryan McCosker and Yoko Shimizu
+
+########################################################################################################
+########################################################################################################
+
+######################
+#Quick introduction
+
+#The original data was obtained from Norbert: Periphyton.Scenario.Comparison07_0.55VTOC.PIVOTPREP.YEAR.xlsm.
+#The "SeasTimeSeries" spreadsheet was formatted to use in R, then saved as a .csv file.
+#Please see the input data ('./data/2022-02-18 Periphyton_dat.csv')
+#NOTE this assessment will be available on eco risk projector platform from mid 2023 onwards.
+
+
+######################
+#Data type
+
+#The eco risk projector output should be a long data format (.csv) and contains the following columns.
+#Note: column titles are case sensitive.
+#1st column - Year
+#2nd column - Season
+#3rd column - Site
+#4th column - Scenario
+#5th column - Habitat
+
+
+######################
+#Required output(s)
+
+#1. Summary statistics table (.csv). Mean/SD/SE periphyton habitat (m) per quarter by site.
+#2. Bar plots showing the mean periphyton habitat (m) per quarter by site (.tiff).
+
+#Note: for each sample location, mean periphyton habitat (m) will be calculated per quarter over 
+#a 130yr period under PD and FE flow regime simulation scenarios, then plot it as bar plots
+#with error bars(SD as per Norbert).
+
+
+
+########################################################################################################
+
+#Data prepping and formatting
+
+########################################################################################################
+
+
+#Record start time
+start.time <- Sys.time()
+
+#Call packages
+require("pacman")
+pacman::p_load(tidyr, dplyr, plyr, ggplot2, gridExtra, gtools)
+
+
+#Call the model output data
+dat <- read.csv('./data/2022-02-18 Periphyton_dat.csv')
+str(dat)
+
+#Replace 0 values with NA as per Norberts method
+dat$Habitat[dat$Habitat == 0] <- NA
+
+#Remove NA from the analysis 
+dat <- dat[!is.na(dat$Habitat),]
+
+#Change Season/Scenario to factor and apply levels
+dat$Season <- factor(dat$Season, levels = c("Jan-Mar", "Apr-Jun", "Jul-Sep", "Oct-Dec"))
+dat$Scenario <- factor(dat$Scenario, levels = c("PD", "FE"))
+
+
+
+########################################################################################################
+
+#Summary statistics (loop!)
+
+########################################################################################################
+
+
+#Determine number of sites for looping 
+no_sites <- length(unique(dat$Site))
+site_names <- unique(dat$Site)
+site_names
+
+#Split dataframe into a list by site name (in alphabetical order)
+dat_list <- split(dat, f=dat$Site)
+
+#Order site names alphabetically to match up with the dat_list above
+site_names <- site_names[order(site_names)]
+site_names
+
+#create an empty list to store summary statistics
+tab <- list()
+
+#Calculate summary statistics (Mean, SD, SE)
+for(i in 1:no_sites){
+  tab[[i]] <- ddply(dat_list[[i]], c('Season', 'Scenario', 'Site'), summarise,
+                  Mean = mean(Habitat),
+                  SE = sd(Habitat) / sqrt((length(Habitat))),
+                  SD = sd(Habitat)) #function to be applied to each site
+  
+}
+
+#assigning the name of each list item to be its respective site
+names(tab) <- c(site_names) 
+
+#Check the summary stats by site
+tab
+
+#Save as .csv
+write.csv(tab, './results/Periphyton summary statistics.csv')
+
+
+
+########################################################################################################
+
+#Bar plot (loop!)
+
+########################################################################################################
+
+
+#Create an empty list to store ggplot figures in
+plots <- list()
+
+#Generate all plots and save them in plots list (above), then plot them all in same window.
+for(i in 1:no_sites){
+  plots[[i]] <- ggplot(tab[[i]], aes(x = Season, y = Mean, fill = Scenario))+ 
+    ylim(-1,30) +
+    xlab("Season") +
+    ylab("Habitat (m)") +
+    ggtitle(names(tab[i]))+
+    geom_bar(stat = "identity", position = "dodge", show.legend = F)+
+    geom_errorbar(aes(ymin = Mean-SD, ymax = Mean + SD), width=.1,position=position_dodge(.9))+
+    theme(plot.title = element_text(size=10))+
+    theme(axis.text=element_text(size=8))+
+    theme(axis.title=element_text(size=8))+
+    theme(legend.text=element_text(size=8))+
+    theme(legend.title=element_text(size=8))+
+    scale_fill_manual(values = c("#b5e3d2", "#2bb891"))   #NM inserted for new colour scheme
+  
+}
+
+
+
+#####################################################################################################
+
+#Visualisation 
+
+#####################################################################################################
+
+#Display plots 
+grid.arrange(grobs = plots, ncol = 2)
+
+#Save as .tiff at 600dpi as per Glenn
+ggsave(file = './results/Periphyton barplot.tiff', 
+       arrangeGrob(grobs = plots, ncol=2), width=5, height=7.5, units="in", dpi=600)
+
+
+
+#Time taken to run the script
+end.time <- Sys.time()
+time <- end.time - start.time
+time
+
+
+
+########################################################################################################
+#End of Script
+
+

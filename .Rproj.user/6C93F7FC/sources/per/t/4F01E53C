@@ -1,0 +1,27 @@
+{
+    "id": "4F01E53C",
+    "path": "C:/github.c/Periphyton/code/AnnHabMeans.SigTest.Pioneer.r",
+    "project_path": "code/AnnHabMeans.SigTest.Pioneer.r",
+    "type": "r_source",
+    "hash": "1645707157",
+    "contents": "",
+    "dirty": false,
+    "created": 1695176101748.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "478,4",
+        "scrollLine": "473",
+        "disableDependencyDiscovery": "1"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1695971337,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1695971337811,
+    "read_only": false,
+    "read_only_alternatives": []
+}
